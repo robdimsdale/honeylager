@@ -71,10 +71,10 @@ func (sink *Sink) Log(logFormat lager.LogFormat) {
 	ev.Metadata = map[string]interface{}{
 		metadataKeyID: rand.Intn(math.MaxInt32),
 	}
-	ev.AddField("source", logFormat.Source)
-	ev.AddField("message", logFormat.Message)
-	ev.AddField("log_level_iota", logFormat.LogLevel)
-	ev.AddField("log_level", logLevelToString(logFormat.LogLevel))
+	ev.AddField("lager_source", logFormat.Source)
+	ev.AddField("lager_message", logFormat.Message)
+	ev.AddField("lager_log_level_iota", logFormat.LogLevel)
+	ev.AddField("lager_log_level", logLevelToString(logFormat.LogLevel))
 
 	ev.Add(logFormat.Data)
 
@@ -83,7 +83,7 @@ func (sink *Sink) Log(logFormat lager.LogFormat) {
 	// default time (Now())
 	ts, err := parseLagerTimestamp(logFormat.Timestamp)
 	if err != nil {
-		ev.AddField("timestamp_parse_error", err)
+		ev.AddField("lager_timestamp_parse_error", err)
 	} else {
 		ev.Timestamp = ts
 	}
