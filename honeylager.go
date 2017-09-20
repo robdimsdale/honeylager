@@ -25,7 +25,7 @@ type Sink struct {
 // NewSink returns a new Sink
 // Callers are expected to call Close() when they are done
 // e.g. sink := NewSink(); defer sink.Close()
-// Callers may also wish to track the responses with go ReadResponses()
+// Callers may also wish to track the responses with ReadResponses()
 func NewSink(
 	honeycombWriteKey string,
 	honeycombDataset string,
@@ -76,6 +76,14 @@ func (sink *Sink) Log(logFormat lager.LogFormat) {
 	ev.AddField("lager_log_level_iota", logFormat.LogLevel)
 	ev.AddField("lager_log_level", logLevelToString(logFormat.LogLevel))
 
+	// namespace the 'session' value becauase it isn't particularly useful for
+	// event-based observability, and therefore namespacing it makes it easier to
+	// reason about (and ignore).
+	if session, ok := logFormat.Data["session"]; ok {
+		ev.AddField("lager_session", session)
+		delete(logFormat.Data, "session")
+	}
+
 	ev.Add(logFormat.Data)
 
 	// Override the event timestamp if the JSON blob has a valid time. If time
@@ -123,6 +131,10 @@ func logLevelToString(logLevel lager.LogLevel) string {
 	}
 }
 
+// ReadResponses is a blocking method that waits for responses from Honeycomb
+// and prints whether the event emission succeeded or failed.
+// Callers will likely want to execute this method in a goroutine due to its
+// blocking, asynchronous, nature.
 func ReadResponses() {
 	for r := range libhoney.Responses() {
 		if r.StatusCode < http.StatusOK || r.StatusCode >= http.StatusMultipleChoices {
