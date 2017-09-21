@@ -68,6 +68,15 @@ func (sink *Sink) Log(logFormat lager.LogFormat) {
 
 	ev := sink.builder.NewEvent()
 
+	// 0 is current function
+	// 1 is lager.Info, lager.Debug etc
+	// 2 is the function that called lager.Info, lager.Debug etc
+	functionOffset := 2
+	if pc, _, _, ok := runtime.Caller(functionOffset); ok {
+		funcName := runtime.FuncForPC(pc).Name()
+		ev.AddField("function", funcName)
+	}
+
 	ev.Metadata = map[string]interface{}{
 		metadataKeyID: rand.Intn(math.MaxInt32),
 	}
